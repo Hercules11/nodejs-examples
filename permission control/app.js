@@ -63,7 +63,37 @@ function parseJSONBody(req) {
         });
     });
 }
+// 实战 / 设计注意事项（教训与陷阱）
+// 默认拒绝：策略评估应该默认拒绝，只有明确允许才放行（示例中也遵循这一点）。
+// deny overrides：复杂系统中需要明确定义优先级（例如一个策略显式 deny 应覆盖 permit）。
+// 策略错误处理：策略函数如果抛异常应当按默认安全策略处理（通常为 deny）并记录异常。
+// 最小权限原则：角色要尽量小而明晰，避免过多的 admin 权限。
+// 审计与可追溯性：生产系统必须能回溯为什么被允许或拒绝（policy trace）。
 
+// 可扩展与生产化改进点（实践建议）
+// 不要用内存：将 users / roles / policies / resources 存到数据库（Postgres、Mongo、Redis），并对 policy、role 进行版本管理。
+// 策略语言：用 DSL 或基于 Rego（Open Policy Agent）/CEL 等来表达 ABAC 策略，会更灵活并支持审计。
+// 细粒度权限：考虑资源类型 / 层次化权限(e.g., document: read, document: comment: create) 与资源ID绑定的 ACL。
+// 审计日志：记录谁何时对哪个资源做了什么决定（allow / deny），这对合规很重要。
+// 集中策略服务：把策略放在独立的决策服务（PDP），应用只负责传参请求。
+// 缓存：权限检查频繁，缓存用户角色 / 权限映射，注意缓存一致性与过期。
+// 认证：用 OAuth2 / OIDC / JWT，token 签名与验证放到认证网关（AuthN），API 网关做初步授权。
+// 测试：大量单元 / 集成测试（不同角色、属性、边界时间、policy 错误情况）。
+// 安全性：密码使用强散列（bcrypt / scrypt / argon2），token secret 存在安全位置，启用 HTTPS、rate limits。
+
+// 认证（Auth）
+// 代码用简单 HMAC - signed token（payload + signature）模拟 JWT 的行为：便于演示 token 签名与过期验证。生产建议使用成熟 JWT 库或使用标准 OIDC 解决方案。
+
+// 组合策略
+// 在示例里：isAllowed 实现了 RBAC OR ABAC：如果任何一个允许，则允许访问。这是常见的折衷方式（RBAC 提供粗粒度、ABAC 提供细粒度）。实际系统中可自定义合并策略（deny overrides、permit overrides、priority - based）
+
+// ABAC（Attribute - Based Access Control）
+// 基本思想：访问决策基于主体（user）属性、资源（resource）属性、环境 / 上下文（比如时间、IP）与操作。典型场景：只有 owner、或 clearance >= sensitivity 才能读敏感文档，或者工作时间内允许修改等。
+// 代码体现：abacPolicies 是一组函数，每个函数对(user, resource, action, ctx) 返回 true | false。evaluateABAC 遍历策略，只要有一条允许即放行（你可以改为“所有策略必须通过”或用 deny overrides 等策略合并规则）。
+
+// RBAC（Role - Based Access Control）
+// 基本思想：把权限（actions／resources）绑定到角色上，把用户绑定到角色。授权检查只需判断用户的角色集合是否包含执行动作所需的权限。
+// 代码体现：roles 映射 roleName -> permissions 集合，authorizeRBAC(user, perm) 检查任一角色是否包含权限。简单实现了 admin:* 样式的通配符支持
 // ---------- In-memory stores (for demo) ----------
 const users = {}; // username -> { username, salt, passHash, roles:[], attrs:{} }
 const roles = {}; // roleName -> { permissions: Set(...) }
