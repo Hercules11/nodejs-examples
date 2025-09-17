@@ -1,0 +1,6 @@
+[2025-09-17T19:51:47.114Z] [INFO] Server started on port 3000 {}
+[2025-09-17T19:51:50.279Z] [INFO] Incoming request {"method":"GET","url":"/","requestId":"vi3pxnrs"}
+[2025-09-17T19:51:50.281Z] [INFO] Request completed {"requestId":"vi3pxnrs","duration":2.1604999999999563}
+[2025-09-17T19:51:54.760Z] [INFO] Incoming request {"method":"GET","url":"/metrics","requestId":"ep69ia3d"}
+[2025-09-17T19:51:54.761Z] [INFO] Metrics served {"requestId":"ep69ia3d"}
+[2025-09-17T19:51:59.219Z] [INFO] Incoming request {"method":"GET","url":"/error","requestId":"8vj7m4ux"}
